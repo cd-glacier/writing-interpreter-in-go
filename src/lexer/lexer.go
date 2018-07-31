@@ -1,7 +1,9 @@
 package lexer
 
 import (
+	"github.com/g-hyoga/writing-interpreter-in-go/src/logger"
 	"github.com/g-hyoga/writing-interpreter-in-go/src/token"
+	"github.com/sirupsen/logrus"
 )
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
@@ -20,6 +22,7 @@ func isDigit(ch byte) bool {
 
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
+	l.logger = logger.NewLogger()
 	l.readChar()
 	return l
 }
@@ -29,6 +32,7 @@ type Lexer struct {
 	position     int  // current position in input (points to current char)
 	readPosition int  // current reading position in input (after current char)
 	ch           byte // current char under examination
+	logger       *logrus.Logger
 }
 
 func (l *Lexer) readChar() {
@@ -65,6 +69,14 @@ func (l *Lexer) readNumber() string {
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
+
+	defer func() {
+		l.logger.WithFields(logrus.Fields{
+			"l.ch":        string(l.ch),
+			"tok.Literal": tok.Literal,
+			"tok.Type":    tok.Type,
+		}).Debug("[NextToken]")
+	}()
 
 	l.skipWhitespace()
 
