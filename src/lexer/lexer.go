@@ -1,8 +1,6 @@
 package lexer
 
-import (
-	"github.com/g-hyoga/writing-interpreter-in-go/token"
-)
+import "github.com/g-hyoga/writing-interpreter-in-go/src/token"
 
 type Lexer struct {
 	input        string
@@ -13,6 +11,7 @@ type Lexer struct {
 
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
+	l.readChar()
 	return l
 }
 
