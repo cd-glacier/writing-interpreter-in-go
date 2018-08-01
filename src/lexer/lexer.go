@@ -80,7 +80,6 @@ func (l *Lexer) NextToken() token.Token {
 
 	defer func() {
 		l.logger.WithFields(logrus.Fields{
-			"l.ch":        string(l.ch),
 			"tok.Literal": tok.Literal,
 			"tok.Type":    tok.Type,
 		}).Debug("[NextToken]")
