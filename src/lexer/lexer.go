@@ -22,7 +22,7 @@ func isDigit(ch byte) bool {
 
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
-	l.logger = logger.NewLogger()
+	l.logger = logger.New()
 	l.readChar()
 	return l
 }
@@ -82,7 +82,7 @@ func (l *Lexer) NextToken() token.Token {
 		l.logger.WithFields(logrus.Fields{
 			"tok.Literal": tok.Literal,
 			"tok.Type":    tok.Type,
-		}).Debug("[NextToken]")
+		}).Debug("[lexer] NextToken")
 	}()
 
 	l.skipWhitespace()

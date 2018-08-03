@@ -7,7 +7,7 @@ import (
 	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 )
 
-func NewLogger() *logrus.Logger {
+func New() *logrus.Logger {
 	log := logrus.New()
 	formatter := new(prefixed.TextFormatter)
 	formatter.ForceFormatting = true
