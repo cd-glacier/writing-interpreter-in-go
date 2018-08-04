@@ -84,6 +84,12 @@ func (p *Parser) parseStatement() ast.Statement {
 			p.logger.Error("[parser] failed to parse let statement")
 		}
 		return stmt
+	case token.RETURN:
+		stmt := p.parseReturnStatement()
+		if stmt == nil {
+			p.logger.Error("[parser] failed to parse return statement")
+		}
+		return stmt
 	default:
 		return nil
 	}
@@ -140,4 +146,16 @@ func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 
 func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
+}
+
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	stmt := &ast.ReturnStatement{Token: p.curToken}
+
+	p.nextToken()
+
+	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
 }
