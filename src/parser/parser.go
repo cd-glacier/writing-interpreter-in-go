@@ -43,6 +43,9 @@ func (p *Parser) ParseProgram() *ast.Program {
 	for p.curToken.Type != token.EOF {
 		stmt := p.parseStatement()
 		if stmt != nil {
+			p.logger.WithFields(logrus.Fields{
+				"stmt": stmt,
+			}).Debug("[parser] statement")
 			program.Statements = append(program.Statements, stmt)
 		}
 		p.nextToken()
@@ -54,7 +57,11 @@ func (p *Parser) ParseProgram() *ast.Program {
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
-		return p.parseLetStatement()
+		stmt := p.parseLetStatement()
+		if stmt == nil {
+			p.logger.Error("[parser] failed to parse let statement")
+		}
+		return stmt
 	default:
 		return nil
 	}
@@ -73,9 +80,15 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
+	// here is where to implement to parse value
+
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
+
+	p.logger.WithFields(logrus.Fields{
+		"stmt": stmt,
+	}).Debug("[parser] parseLetStatement")
 
 	return stmt
 }
@@ -85,7 +98,7 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 }
 
 func (p *Parser) peekTokenIs(t token.TokenType) bool {
-	return p.curToken.Type == t
+	return p.peekToken.Type == t
 }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
