@@ -87,7 +87,9 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	}
 
 	p.logger.WithFields(logrus.Fields{
-		"stmt": stmt,
+		"stmt.Token": stmt.Token,
+		"stmt.Name":  stmt.Name,
+		"stmt.Value": stmt.Value,
 	}).Debug("[parser] parseLetStatement")
 
 	return stmt
