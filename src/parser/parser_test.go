@@ -18,6 +18,7 @@ let foobar = 838383;
 	p := New(l)
 
 	program := p.ParseProgram()
+	checkParserErrros(t, p)
 
 	if program == nil {
 		t.Fatalf("ParseProgram() return nil")
@@ -42,27 +43,36 @@ let foobar = 838383;
 	}
 }
 
-func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
-	if s.TokenLiteral() != "let" {
-		t.Errorf("s.TokenLiteral not 'let'. got=%q", s.TokenLiteral())
-		return false
+func TestIdentifierExpression(t *testing.T) {
+	input := "foobar;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+
+	checkParserErrros(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
 	}
 
-	letStmt, ok := s.(*ast.LetStatement)
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Errorf("s not *ast.LetStatement. go=%T", s)
-		return false
+		t.Fatalf("exp not *ast.Identifier. got=%T", program.Statements[0])
 	}
 
-	if letStmt.Name.Value != name {
-		t.Errorf("letStmt.Name.Value not '%s'. got=%s", name, letStmt.Name.Value)
-		return false
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	if !ok {
+		t.Errorf("exp not *ast.Identifier. got=%T", stmt.Expression)
 	}
 
-	if letStmt.Name.TokenLiteral() != name {
-		t.Errorf("s.Name not '%s'. got=%s", name, letStmt.Name)
-		return false
+	expectedValue := "foobar"
+
+	if ident.Value != expectedValue {
+		t.Errorf("ident.Value not %s. got=%s", expectedValue, ident.Value)
+	}
+	if ident.TokenLiteral() != expectedValue {
+		t.Errorf("ident.TokenLiteral not %s. got=%s", expectedValue, ident.TokenLiteral())
 	}
 
-	return true
 }
