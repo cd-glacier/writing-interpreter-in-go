@@ -11,3 +11,8 @@ run:
 test:
 	go test -v ./...
 
+docker-build:
+	docker build -t interpreter .
+
+docker-run:
+	docker run -e LOG_LEVEL=debug -v $(PWD):/go/src/github.com/g-hyoga/writing-interpreter-in-go interpreter go run ./src/cmd/main.go
