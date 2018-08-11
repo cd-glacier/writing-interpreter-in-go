@@ -5,6 +5,7 @@ import (
 
 	"github.com/g-hyoga/writing-interpreter-in-go/src/ast"
 	"github.com/g-hyoga/writing-interpreter-in-go/src/lexer"
+	"github.com/sirupsen/logrus"
 )
 
 func TestLetStatement(t *testing.T) {
@@ -24,6 +25,9 @@ let foobar = 838383;
 		t.Fatalf("ParseProgram() return nil")
 	}
 	if len(program.Statements) != 3 {
+		p.logger.WithFields(logrus.Fields{
+			"program.Statements": program.Statements,
+		}).Error("program.Statements does not contain 3 statements.")
 		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
 	}
 
@@ -87,7 +91,7 @@ func TestIdentifierExpression(t *testing.T) {
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 	if !ok {
-		t.Fatalf("exp not *ast.Identifier. got=%T", program.Statements[0])
+		t.Fatalf("exp not *ast.identifier. got=%t", program.Statements[0])
 	}
 
 	ident, ok := stmt.Expression.(*ast.Identifier)

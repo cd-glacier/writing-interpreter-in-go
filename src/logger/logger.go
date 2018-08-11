@@ -17,7 +17,7 @@ func New() *logrus.Logger {
 	if logLevel == "debug" {
 		log.Level = logrus.DebugLevel
 	} else {
-		log.Level = logrus.WarnLevel
+		log.Level = logrus.InfoLevel
 	}
 
 	return log
