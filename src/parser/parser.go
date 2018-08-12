@@ -1,6 +1,9 @@
 package parser
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/g-hyoga/writing-interpreter-in-go/src/ast"
 	"github.com/g-hyoga/writing-interpreter-in-go/src/lexer"
 	"github.com/g-hyoga/writing-interpreter-in-go/src/logger"
@@ -41,9 +44,11 @@ type Parser struct {
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
 	p.logger = logger.New()
+	p.logger.Info("[parser] New")
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
+	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 
 	p.nextToken()
 	p.nextToken()
@@ -56,6 +61,10 @@ func (p *Parser) Errors() []string {
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken.Literal,
+	}).Info("[parser] ParseProgram")
+
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
@@ -74,6 +83,10 @@ func (p *Parser) ParseProgram() *ast.Program {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken.Literal,
+	}).Info("[parser] parseExpression")
+
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		return nil
@@ -83,6 +96,10 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken.Literal,
+	}).Info("[parser] parseStatement")
+
 	switch p.curToken.Type {
 	case token.LET:
 		stmt := p.parseLetStatement()
@@ -102,8 +119,11 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	stmt := &ast.ExpressionStatement{Token: p.curToken}
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken.Literal,
+	}).Info("[parser] parseExpressionStatement")
 
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
 	stmt.Expression = p.parseExpression(LOWEST)
 
 	if p.peekTokenIs(token.SEMICOLON) {
@@ -114,6 +134,11 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
+	p.logger.WithFields(logrus.Fields{
+		"current_token_literal": p.curToken.Literal,
+		"peek_token_literal":    p.peekToken.Literal,
+	}).Info("[parser] parseLetStatement")
+
 	stmt := &ast.LetStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENT) {
@@ -126,8 +151,12 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		return nil
 	}
 
-	// here is where to implement to parse value
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken,
+		"peek_token":    p.peekToken,
+	}).Info("[parser] parseLetStatement")
 
+	// here is where to implement to parse value
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -142,6 +171,11 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 }
 
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken.Literal,
+		"peek_token":    p.peekToken.Literal,
+	}).Info("[parser] parseReturnStatement")
+
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 
 	p.nextToken()
@@ -156,6 +190,27 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
+	p.logger.WithFields(logrus.Fields{
+		"current_token_literal": p.curToken.Literal,
+		"current_token":         p.curToken,
+	}).Info("[parser] parseIdentifier")
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
 
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken.Literal,
+	}).Info("[parser] parseIntegerLiteral")
+
+	lit := &ast.IntegerLiteral{Token: p.curToken}
+
+	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("cloud not parse %q as integer", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		p.logger.Errorf("[parser] %s", msg)
+		return nil
+	}
+	lit.Value = value
+	return lit
 }

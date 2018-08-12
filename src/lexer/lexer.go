@@ -9,6 +9,7 @@ import (
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.logger = logger.New()
+	l.logger.Debug("[lexer] New")
 	l.readChar()
 	return l
 }

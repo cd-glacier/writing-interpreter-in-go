@@ -11,6 +11,9 @@ run:
 test:
 	go test -v ./...
 
+watch:
+	looper
+
 docker-build:
 	docker build -t interpreter .
 
