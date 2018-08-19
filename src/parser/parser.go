@@ -27,6 +27,17 @@ const (
 	CALL        // myFunction(X)
 )
 
+var precedences = []string{
+	"ILLEGAL",
+	"LOWEST",
+	"EQUALS",
+	"LESSGREATER",
+	"SUM",
+	"PRODCU",
+	"PREFIX",
+	"CALL",
+}
+
 type Parser struct {
 	l *lexer.Lexer
 
@@ -44,11 +55,13 @@ type Parser struct {
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
 	p.logger = logger.New()
-	p.logger.Info("[parser] New")
+	p.logger.Debug("[parser] New")
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.BANG, p.parsePrefixExpression)
+	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -63,7 +76,7 @@ func (p *Parser) Errors() []string {
 func (p *Parser) ParseProgram() *ast.Program {
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken.Literal,
-	}).Info("[parser] ParseProgram")
+	}).Debug("[parser] ParseProgram")
 
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
@@ -84,21 +97,28 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	p.logger.WithFields(logrus.Fields{
-		"current_token": p.curToken.Literal,
-	}).Info("[parser] parseExpression")
+		"current_token_literal": p.curToken.Literal,
+		"current_token_type":    p.curToken.Type,
+		"precedence":            precedences[precedence],
+	}).Debug("[parser] enter parseExpression")
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
+		p.noPrefixParserFnError(p.curToken.Type)
 		return nil
 	}
 	leftExp := prefix()
+
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken,
+	}).Debug("[parser] exit parseExpression")
 	return leftExp
 }
 
 func (p *Parser) parseStatement() ast.Statement {
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken.Literal,
-	}).Info("[parser] parseStatement")
+	}).Debug("[parser] parseStatement")
 
 	switch p.curToken.Type {
 	case token.LET:
@@ -121,7 +141,7 @@ func (p *Parser) parseStatement() ast.Statement {
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken.Literal,
-	}).Info("[parser] parseExpressionStatement")
+	}).Debug("[parser] parseExpressionStatement")
 
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 	stmt.Expression = p.parseExpression(LOWEST)
@@ -137,7 +157,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	p.logger.WithFields(logrus.Fields{
 		"current_token_literal": p.curToken.Literal,
 		"peek_token_literal":    p.peekToken.Literal,
-	}).Info("[parser] parseLetStatement")
+	}).Debug("[parser] parseLetStatement")
 
 	stmt := &ast.LetStatement{Token: p.curToken}
 
@@ -154,7 +174,7 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken,
 		"peek_token":    p.peekToken,
-	}).Info("[parser] parseLetStatement")
+	}).Debug("[parser] parseLetStatement")
 
 	// here is where to implement to parse value
 	for !p.curTokenIs(token.SEMICOLON) {
@@ -174,7 +194,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken.Literal,
 		"peek_token":    p.peekToken.Literal,
-	}).Info("[parser] parseReturnStatement")
+	}).Debug("[parser] parseReturnStatement")
 
 	stmt := &ast.ReturnStatement{Token: p.curToken}
 
@@ -193,14 +213,14 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	p.logger.WithFields(logrus.Fields{
 		"current_token_literal": p.curToken.Literal,
 		"current_token":         p.curToken,
-	}).Info("[parser] parseIdentifier")
+	}).Debug("[parser] parseIdentifier")
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken.Literal,
-	}).Info("[parser] parseIntegerLiteral")
+	}).Debug("[parser] parseIntegerLiteral")
 
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
@@ -213,4 +233,20 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	}
 	lit.Value = value
 	return lit
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	p.logger.WithFields(logrus.Fields{
+		"current_token":         p.curToken,
+		"current_token_literal": p.curToken.Literal,
+	}).Debug("[parser] parsePrefixExpression")
+
+	expression := &ast.PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+	}
+
+	p.nextToken()
+	expression.Right = p.parseExpression(PREFIX)
+	return expression
 }
