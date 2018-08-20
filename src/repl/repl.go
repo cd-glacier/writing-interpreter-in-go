@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/g-hyoga/writing-interpreter-in-go/src/lexer"
-	"github.com/g-hyoga/writing-interpreter-in-go/src/token"
+	"github.com/g-hyoga/writing-interpreter-in-go/src/parser"
 )
 
 const PROMPT = ">> "
@@ -23,10 +23,8 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		l := lexer.New(line)
-
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			fmt.Printf("%+v\n", tok)
-		}
-
+		p := parser.New(l)
+		program := p.ParseProgram()
+		fmt.Printf("%+v\n", program.String())
 	}
 }
