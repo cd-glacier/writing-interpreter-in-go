@@ -35,6 +35,17 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK: PRODUCT,
 }
 
+var strPrecedences = []string{
+	"ILLEGAL",
+	"LOWEST",
+	"EQUALS",
+	"LESSGREATER",
+	"SUM",
+	"PRODUCT",
+	"PREFIX",
+	"CALL",
+}
+
 func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
 	p.errors = append(p.errors, msg)

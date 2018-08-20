@@ -79,10 +79,11 @@ func (p *Parser) ParseProgram() *ast.Program {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+	// defer untrace(trace("parseExpression"))
 	p.logger.WithFields(logrus.Fields{
 		"current_token_literal": p.curToken.Literal,
 		"current_token_type":    p.curToken.Type,
-		"precedence":            precedence,
+		"precedence":            strPrecedences[precedence],
 	}).Debug("[parser] enter parseExpression")
 
 	prefix := p.prefixParseFns[p.curToken.Type]
@@ -100,11 +101,19 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 		p.nextToken()
 
+		p.logger.WithFields(logrus.Fields{
+			"current_token": p.curToken,
+			"peek_token":    p.peekToken,
+			"infix_func":    p.curToken.Type,
+			"leftExp":       leftExp,
+		}).Debug("[parser] enter infix func from parseExpression")
+
 		leftExp = infix(leftExp)
 	}
 
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken,
+		"leftExp":       leftExp,
 	}).Debug("[parser] exit parseExpression")
 	return leftExp
 }
@@ -133,6 +142,7 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	// defer untrace(trace("parseExpressionStatement"))
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken.Literal,
 	}).Debug("[parser] parseExpressionStatement")
@@ -205,13 +215,13 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 func (p *Parser) parseIdentifier() ast.Expression {
 	p.logger.WithFields(logrus.Fields{
-		"current_token_literal": p.curToken.Literal,
-		"current_token":         p.curToken,
+		"current_token": p.curToken,
 	}).Debug("[parser] parseIdentifier")
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
+	// defer untrace(trace("parseIntegerLiteral"))
 	p.logger.WithFields(logrus.Fields{
 		"current_token": p.curToken.Literal,
 	}).Debug("[parser] parseIntegerLiteral")
@@ -230,9 +240,9 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
+	// defer untrace(trace("parsePrefixExpression"))
 	p.logger.WithFields(logrus.Fields{
-		"current_token":         p.curToken,
-		"current_token_literal": p.curToken.Literal,
+		"current_token": p.curToken,
 	}).Debug("[parser] parsePrefixExpression")
 
 	expression := &ast.PrefixExpression{
@@ -246,6 +256,12 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	// defer untrace(trace("parseInfixExpression"))
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken,
+		"left":          left,
+	}).Debug("[parser] parseInfixExpression")
+
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
@@ -253,6 +269,13 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	}
 	precedence := p.curPrecedence()
 	p.nextToken()
+
+	p.logger.WithFields(logrus.Fields{
+		"current_token": p.curToken,
+		"peek_token":    p.peekToken,
+		"precedence":    strPrecedences[precedence],
+	}).Debug("[parser] enter parseExpression from parseInfixExpression")
+
 	expression.Right = p.parseExpression(precedence)
 
 	return expression
