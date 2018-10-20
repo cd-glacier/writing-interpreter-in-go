@@ -92,6 +92,11 @@ func (p *Parser) noPrefixParserFnError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
+func (p *Parser) notExpectedToken(expected, got token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be '%s', got '%s' instead", expected, got)
+	p.errors = append(p.errors, msg)
+}
+
 func (p *Parser) peekPrecedence() int {
 	if p, ok := precedences[p.peekToken.Type]; ok {
 		return p

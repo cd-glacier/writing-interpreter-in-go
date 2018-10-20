@@ -172,12 +172,14 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	stmt := &ast.LetStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENT) {
+		p.notExpectedToken(token.IDENT, p.curToken.Type)
 		return nil
 	}
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
 	if !p.expectPeek(token.ASSIGN) {
+		p.notExpectedToken(token.ASSIGN, p.curToken.Type)
 		return nil
 	}
 
@@ -300,6 +302,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	exp := p.parseExpression(LOWEST)
 
 	if !p.expectPeek(token.RPAREN) {
+		p.notExpectedToken(token.RPAREN, p.curToken.Type)
 		return nil
 	}
 	return exp
@@ -309,6 +312,7 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	expression := &ast.IfExpression{Token: p.curToken}
 
 	if !p.expectPeek(token.LPAREN) {
+		p.notExpectedToken(token.LPAREN, p.curToken.Type)
 		return nil
 	}
 
@@ -316,10 +320,12 @@ func (p *Parser) parseIfExpression() ast.Expression {
 	expression.Condition = p.parseExpression(LOWEST)
 
 	if !p.expectPeek(token.RPAREN) {
+		p.notExpectedToken(token.RPAREN, p.curToken.Type)
 		return nil
 	}
 
 	if !p.expectPeek(token.LBRACE) {
+		p.notExpectedToken(token.LBRACE, p.curToken.Type)
 		return nil
 	}
 
@@ -329,6 +335,7 @@ func (p *Parser) parseIfExpression() ast.Expression {
 		p.nextToken()
 
 		if !p.expectPeek(token.LBRACE) {
+			p.notExpectedToken(token.LBRACE, p.curToken.Type)
 			return nil
 		}
 
@@ -358,6 +365,7 @@ func (p *Parser) parseFunctionLiteral() ast.Expression {
 	lit := &ast.FunctionLiteral{Token: p.curToken}
 
 	if !p.expectPeek(token.LPAREN) {
+		p.notExpectedToken(token.LPAREN, p.curToken.Type)
 		return nil
 	}
 
@@ -393,6 +401,7 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
+		p.notExpectedToken(token.RPAREN, p.curToken.Type)
 		return nil
 	}
 
@@ -423,6 +432,7 @@ func (p *Parser) parseCallArguments() []ast.Expression {
 	}
 
 	if !p.expectPeek(token.RPAREN) {
+		p.notExpectedToken(token.RPAREN, p.curToken.Type)
 		return nil
 	}
 
