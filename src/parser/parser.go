@@ -186,7 +186,10 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		"peek_token":    p.peekToken,
 	}).Debug("[parser] parseLetStatement")
 
-	// here is where to implement to parse value
+	p.nextToken()
+
+	stmt.Value = p.parseExpression(LOWEST)
+
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -210,7 +213,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	p.nextToken()
 
-	// here is where to implement to parse value
+	stmt.ReturnValue = p.parseExpression(LOWEST)
 
 	for !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
