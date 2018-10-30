@@ -31,9 +31,56 @@ func Eval(node ast.Node) object.Object {
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
+	case *ast.InfixExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Operator, left, right)
 	}
-
 	return nil
+}
+
+func evalInfixExpression(operator string, left, right object.Object) object.Object {
+	log.Debugf("[evaluator] call evalInfixExpression. operator: %s, left: %+v, right: %+v", operator, left, right)
+	switch {
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalIntegerInfixExpression(operator, left, right)
+	case operator == "==":
+		return nativeBoolToBooleanObject(left == right)
+	case operator == "!=":
+		return nativeBoolToBooleanObject(left != right)
+	default:
+		log.Errorf("found unkown binary operands '%s', '%s'", left.Inspect(), right.Inspect())
+		return NULL
+	}
+}
+
+func evalIntegerInfixExpression(operator string, left, right object.Object) object.Object {
+	leftVal := left.(*object.Integer).Value
+	rightVal := right.(*object.Integer).Value
+
+	log.Debugf("[evaluator] call evalIntegerInfixExpression. operator: %s, left_value: %d, right_value: %d", operator, leftVal, rightVal)
+
+	switch operator {
+	case "+":
+		return &object.Integer{Value: leftVal + rightVal}
+	case "-":
+		return &object.Integer{Value: leftVal - rightVal}
+	case "*":
+		return &object.Integer{Value: leftVal * rightVal}
+	case "/":
+		return &object.Integer{Value: leftVal / rightVal}
+	case "<":
+		return nativeBoolToBooleanObject(leftVal < rightVal)
+	case ">":
+		return nativeBoolToBooleanObject(leftVal > rightVal)
+	case "==":
+		return nativeBoolToBooleanObject(leftVal == rightVal)
+	case "!=":
+		return nativeBoolToBooleanObject(leftVal != rightVal)
+	default:
+		log.Errorf("found unknown infix operator: '%s'", operator)
+		return NULL
+	}
 }
 
 func evalBangOperatorExpression(right object.Object) object.Object {
@@ -81,6 +128,7 @@ func evalStatements(stmts []ast.Statement) object.Object {
 }
 
 func nativeBoolToBooleanObject(input bool) *object.Boolean {
+	log.Debugf("[evaluator] called nativeBoolToBooleanObject. input: %t", input)
 	if input {
 		return TRUE
 	}
