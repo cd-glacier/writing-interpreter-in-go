@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"github.com/g-hyoga/writing-interpreter-in-go/src/ast"
+	"github.com/g-hyoga/writing-interpreter-in-go/src/logger"
 	"github.com/g-hyoga/writing-interpreter-in-go/src/object"
 )
 
@@ -10,6 +11,8 @@ var (
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
 )
+
+var log = logger.New()
 
 func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
@@ -25,9 +28,47 @@ func Eval(node ast.Node) object.Object {
 		return &object.Integer{Value: node.Value}
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
+	case *ast.PrefixExpression:
+		right := Eval(node.Right)
+		return evalPrefixExpression(node.Operator, right)
 	}
 
 	return nil
+}
+
+func evalBangOperatorExpression(right object.Object) object.Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		return FALSE
+	}
+}
+
+func evalMinusPrefixExpression(right object.Object) object.Object {
+	if right.Type() != object.INTEGER_OBJ {
+		log.Errorf("found unkown token '%s' after '-'.", right.Inspect())
+		return NULL
+	}
+
+	value := right.(*object.Integer).Value
+	return &object.Integer{Value: -value}
+}
+
+func evalPrefixExpression(operator string, right object.Object) object.Object {
+	switch operator {
+	case "!":
+		return evalBangOperatorExpression(right)
+	case "-":
+		return evalMinusPrefixExpression(right)
+	default:
+		log.Errorf("found unkown prefix '%s'", operator)
+		return NULL
+	}
 }
 
 func evalStatements(stmts []ast.Statement) object.Object {
