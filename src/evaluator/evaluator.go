@@ -19,11 +19,14 @@ func Eval(node ast.Node) object.Object {
 
 	// Statements
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalProgram(node)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 	case *ast.BlockStatement:
-		return evalStatements(node.Statements)
+		return evalBlockStatement(node)
+	case *ast.ReturnStatement:
+		val := Eval(node.ReturnValue)
+		return &object.ReturnValue{Value: val}
 
 	// Expressions
 	case *ast.IntegerLiteral:
@@ -43,6 +46,21 @@ func Eval(node ast.Node) object.Object {
 	return nil
 }
 
+func evalProgram(program *ast.Program) object.Object {
+	var result object.Object
+
+	for _, statement := range program.Statements {
+		result = Eval(statement)
+
+		if returnValue, ok := result.(*object.ReturnValue); ok {
+			log.Infof("ReturnValue!!! %#v", returnValue)
+			return returnValue.Value
+		}
+	}
+
+	return result
+}
+
 func evalIfExpression(ie *ast.IfExpression) object.Object {
 	condition := Eval(ie.Condition)
 	if isTruthy(condition) {
@@ -50,7 +68,7 @@ func evalIfExpression(ie *ast.IfExpression) object.Object {
 	} else if ie.Alternative != nil {
 		return Eval(ie.Alternative)
 	} else {
-		log.Errorf("found unknown If structure. %+v", ie)
+		log.Errorf("found unknown If structure. %#v", ie)
 		return NULL
 	}
 }
@@ -64,13 +82,13 @@ func isTruthy(obj object.Object) bool {
 	case FALSE:
 		return false
 	default:
-		log.Errorf("found unknown if condition. %+v", obj)
+		log.Errorf("found unknown if condition. %#v", obj)
 		return true
 	}
 }
 
 func evalInfixExpression(operator string, left, right object.Object) object.Object {
-	log.Debugf("[evaluator] call evalInfixExpression. operator: %s, left: %+v, right: %+v", operator, left, right)
+	log.Debugf("[evaluator] call evalInfixExpression. operator: %s, left: %#v, right: %#v", operator, left, right)
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
@@ -148,11 +166,15 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 	}
 }
 
-func evalStatements(stmts []ast.Statement) object.Object {
+func evalBlockStatement(block *ast.BlockStatement) object.Object {
 	var result object.Object
 
-	for _, statement := range stmts {
+	for _, statement := range block.Statements {
 		result = Eval(statement)
+
+		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
+			return result
+		}
 	}
 	return result
 }
