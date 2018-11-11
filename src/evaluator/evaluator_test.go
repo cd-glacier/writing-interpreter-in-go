@@ -6,7 +6,6 @@ import (
 	"github.com/g-hyoga/writing-interpreter-in-go/src/lexer"
 	"github.com/g-hyoga/writing-interpreter-in-go/src/object"
 	"github.com/g-hyoga/writing-interpreter-in-go/src/parser"
-	"github.com/k0kubun/pp"
 )
 
 func testEval(input string) object.Object {
@@ -21,10 +20,12 @@ func TestReturnStatements(t *testing.T) {
 		input    string
 		expected int64
 	}{
-		{"return 10;", 10},
-		{"return 10; 9;", 10},
-		{"return 2 * 5; 9;", 10},
-		{"9; return 2 * 5; 9;", 10},
+		/*
+			{"return 10;", 10},
+			{"return 10; 9;", 10},
+			{"return 2 * 5; 9;", 10},
+			{"9; return 2 * 5; 9;", 10},
+		*/
 		{
 			`
 if (10 > 1) {
@@ -41,7 +42,6 @@ if (10 > 1) {
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		pp.Println(evaluated)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
 }
