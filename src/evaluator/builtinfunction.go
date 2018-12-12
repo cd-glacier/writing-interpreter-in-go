@@ -1,12 +1,17 @@
 package evaluator
 
-import "github.com/g-hyoga/writing-interpreter-in-go/src/object"
+import (
+	"fmt"
+
+	"github.com/g-hyoga/writing-interpreter-in-go/src/object"
+)
 
 var builtins = map[string]*object.Builtin{
 	"len":   &object.Builtin{Fn: builtinLen},
 	"first": &object.Builtin{Fn: builtinFirst},
 	"rest":  &object.Builtin{Fn: builtinRest},
 	"push":  &object.Builtin{Fn: builtinPush},
+	"puts":  &object.Builtin{Fn: builtinPuts},
 }
 
 func builtinLen(args ...object.Object) object.Object {
@@ -74,4 +79,12 @@ func builtinPush(args ...object.Object) object.Object {
 	newElements[length] = args[1]
 
 	return &object.Array{Elements: newElements}
+}
+
+func builtinPuts(args ...object.Object) object.Object {
+	for _, arg := range args {
+		fmt.Println(arg.Inspect())
+	}
+
+	return NULL
 }
