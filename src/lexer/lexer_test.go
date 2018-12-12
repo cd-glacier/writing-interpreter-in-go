@@ -30,6 +30,7 @@ if (5 < 10) {
 "foobar"
 "foo bar"
 [1, 2];
+{"foo": "bar"}
 `
 
 	tests := []struct {
@@ -115,6 +116,11 @@ if (5 < 10) {
 		{token.INT, "2"},
 		{token.RBRACKET, "]"},
 		{token.SEMICOLON, ";"},
+		{token.LBRACE, "{"},
+		{token.STRING, "foo"},
+		{token.COLON, ":"},
+		{token.STRING, "bar"},
+		{token.RBRACE, "}"},
 		{token.EOF, ""},
 	}
 
@@ -124,8 +130,8 @@ if (5 < 10) {
 		tok := l.NextToken()
 
 		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q",
-				i, tt.expectedType, tok.Type)
+			t.Fatalf("tests[%d] - tokentype wrong. before test case is '%q' expected=%q, got=%q",
+				i, tests[i-1].expectedLiteral, tt.expectedType, tok.Type)
 		}
 
 		if tok.Literal != tt.expectedLiteral {
